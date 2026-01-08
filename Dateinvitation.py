@@ -1,0 +1,208 @@
+import json
+
+message = [
+  "Hi Ivy,",
+  "",
+  "Want to go on a date this Sunday, 1/11?",
+  "",
+  "West Village. I will plan it. Dinner and then we can wander around after.",
+  "",
+  "I look forward to hear your answer. I hope you say yes.",
+  "",
+  "Christopher"
+]
+
+message_js = json.dumps(message, ensure_ascii=False)
+
+html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Date Invitation</title>
+
+  <style>
+    * {{
+      box-sizing: border-box;
+    }}
+
+    body {{
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 32px 18px;
+      background-color: #f5f4f2;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Roboto, Helvetica, Arial, sans-serif;
+      color: #2a2a2a;
+    }}
+
+    .card {{
+      background: #ffffff;
+      max-width: 520px;
+      width: 100%;
+      padding: 36px 32px 34px 32px;
+      border-radius: 18px;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      position: relative;
+
+      border: 1.5px solid #f0d9df;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+
+      opacity: 0;
+      transform: translateY(8px);
+      animation: fadeIn 0.7s ease forwards;
+    }}
+
+    @keyframes fadeIn {{
+      to {{
+        opacity: 1;
+        transform: translateY(0);
+      }}
+    }}
+
+    .card:hover {{
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.10);
+    }}
+
+    .title-box {{
+      display: inline-block;
+      margin: 0 auto 18px auto;
+      padding: 7px 16px;
+      border-radius: 999px;
+      border: 1.5px solid #f0d9df;
+      color: #b86b7a;
+      font-size: 13px;
+      letter-spacing: 0.4px;
+      background: #fff7f9;
+    }}
+
+    .corner-heart {{
+      position: absolute;
+      font-size: 14px;
+      color: #e7a1b0;
+      opacity: 0.9;
+      user-select: none;
+    }}
+
+    .corner-heart.tl {{ top: 12px; left: 14px; }}
+    .corner-heart.tr {{ top: 12px; right: 14px; }}
+    .corner-heart.bl {{ bottom: 12px; left: 14px; }}
+    .corner-heart.br {{ bottom: 12px; right: 14px; }}
+
+    .header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #888;
+    }}
+
+    .label {{
+      letter-spacing: 0.3px;
+    }}
+
+    .hint {{
+      font-size: 12px;
+    }}
+
+    .output {{
+      font-size: 20px;
+      letter-spacing: 0.1px;
+    }}
+
+    .cursor {{
+      display: inline-block;
+      margin-left: 2px;
+      animation: blink 1s steps(1) infinite;
+    }}
+
+    @keyframes blink {{
+      50% {{
+        opacity: 0;
+      }}
+    }}
+  </style>
+</head>
+
+<body>
+  <div class="card" id="card">
+    <span class="corner-heart tl">♥</span>
+    <span class="corner-heart tr">♥</span>
+    <span class="corner-heart bl">♥</span>
+    <span class="corner-heart br">♥</span>
+
+    <div style="text-align:center;">
+      <div class="title-box">Date Invitation</div>
+    </div>
+
+    <div class="header">
+      <div class="label">Message</div>
+      <div class="hint">Click to skip</div>
+    </div>
+
+    <div class="output" id="output"></div>
+    <span class="cursor" id="cursor">|</span>
+  </div>
+
+  <script>
+    const lines = {message_js};
+
+    const out = document.getElementById("output");
+    const cursor = document.getElementById("cursor");
+    const card = document.getElementById("card");
+
+    let line = 0;
+    let char = 0;
+    let skipping = false;
+
+    const typeSpeed = 28;
+    const linePause = 220;
+
+    function renderAll() {{
+      out.textContent = lines.join("\\n");
+      cursor.style.display = "none";
+    }}
+
+    card.addEventListener("click", () => {{
+      skipping = true;
+      renderAll();
+    }});
+
+    function type() {{
+      if (skipping) return;
+
+      if (line >= lines.length) {{
+        cursor.style.display = "none";
+        return;
+      }}
+
+      const current = lines[line];
+
+      if (char < current.length) {{
+        out.textContent += current[char];
+        char++;
+        setTimeout(type, typeSpeed);
+      }} else {{
+        out.textContent += "\\n";
+        if (line < lines.length - 1) out.textContent += "\\n";
+        line++;
+        char = 0;
+        setTimeout(type, linePause);
+      }}
+    }}
+
+    type();
+  </script>
+</body>
+</html>
+"""
+
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(html)
+
+print("index.html generated")
