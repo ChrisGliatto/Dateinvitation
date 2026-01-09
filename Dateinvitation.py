@@ -7,9 +7,11 @@ message = [
   "",
   "West Village. I will plan it. Dinner and then we can wander around after.",
   "",
-  "I look forward to hear your answer. I hope you say yes.",
+  "I would really like to see you and spend the evening together.",
   "",
-  "Christopher"
+  "Let me know what you think.",
+  "",
+  "- Chris <3"
 ]
 
 message_js = json.dumps(message, ensure_ascii=False)
@@ -48,6 +50,7 @@ html = f"""<!DOCTYPE html>
       line-height: 1.75;
       white-space: pre-wrap;
       position: relative;
+      overflow: hidden;
 
       border: 1.5px solid #f0d9df;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
@@ -86,6 +89,7 @@ html = f"""<!DOCTYPE html>
       color: #e7a1b0;
       opacity: 0.9;
       user-select: none;
+      z-index: 2;
     }}
 
     .corner-heart.tl {{ top: 12px; left: 14px; }}
@@ -126,6 +130,48 @@ html = f"""<!DOCTYPE html>
         opacity: 0;
       }}
     }}
+
+    /* click ripple */
+    .ripple {{
+      position: absolute;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      background: rgba(231, 161, 176, 0.20);
+      pointer-events: none;
+      animation: ripple 550ms ease-out forwards;
+      z-index: 1;
+    }}
+
+    @keyframes ripple {{
+      from {{ width: 0; height: 0; opacity: 1; }}
+      to   {{ width: 420px; height: 420px; opacity: 0; }}
+    }}
+
+    /* floating hearts animation after typing */
+    .float-heart {{
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      color: #e7a1b0;
+      opacity: 0;
+      pointer-events: none;
+      animation: floatUp 2.2s ease-in forwards;
+    }}
+
+    @keyframes floatUp {{
+      0%   {{ transform: translateX(-50%) translateY(0) scale(0.9); opacity: 0; }}
+      15%  {{ opacity: 0.9; }}
+      100% {{ transform: translateX(-50%) translateY(-160px) scale(1.15); opacity: 0; }}
+    }}
+
+    /* subtle tilt on desktop */
+    @media (hover:hover) {{
+      .card {{
+        transform-style: preserve-3d;
+      }}
+    }}
   </style>
 </head>
 
@@ -142,7 +188,7 @@ html = f"""<!DOCTYPE html>
 
     <div class="header">
       <div class="label">Message</div>
-      <div class="hint">Click to skip</div>
+      <div class="hint">Tap card to skip</div>
     </div>
 
     <div class="output" id="output"></div>
@@ -166,11 +212,24 @@ html = f"""<!DOCTYPE html>
     function renderAll() {{
       out.textContent = lines.join("\\n");
       cursor.style.display = "none";
+      launchHeartBurst();
     }}
 
-    card.addEventListener("click", () => {{
-      skipping = true;
-      renderAll();
+    card.addEventListener("click", (e) => {{
+      // ripple
+      const r = document.createElement("span");
+      r.className = "ripple";
+      const rect = card.getBoundingClientRect();
+      r.style.left = (e.clientX - rect.left) + "px";
+      r.style.top = (e.clientY - rect.top) + "px";
+      card.appendChild(r);
+      setTimeout(() => r.remove(), 600);
+
+      // skip typing if not finished
+      if (!skipping && cursor.style.display !== "none") {{
+        skipping = true;
+        renderAll();
+      }}
     }});
 
     function type() {{
@@ -178,6 +237,7 @@ html = f"""<!DOCTYPE html>
 
       if (line >= lines.length) {{
         cursor.style.display = "none";
+        launchHeartBurst();
         return;
       }}
 
@@ -195,6 +255,43 @@ html = f"""<!DOCTYPE html>
         setTimeout(type, linePause);
       }}
     }}
+
+    // floating hearts burst when finished
+    function launchHeartBurst() {{
+      const count = 9;
+      for (let i = 0; i < count; i++) {{
+        const h = document.createElement("div");
+        h.className = "float-heart";
+        h.textContent = "♥";
+
+        // randomize start x and size a bit
+        const x = 18 + Math.random() * (card.clientWidth - 36);
+        const size = 14 + Math.random() * 10;
+        const delay = Math.random() * 0.55;
+
+        h.style.left = x + "px";
+        h.style.fontSize = size + "px";
+        h.style.animationDelay = delay + "s";
+
+        card.appendChild(h);
+        setTimeout(() => h.remove(), 2600);
+      }}
+    }}
+
+    // subtle tilt on desktop only
+    card.addEventListener("mousemove", (e) => {{
+      if (!window.matchMedia("(hover:hover)").matches) return;
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      const rx = (-y * 3).toFixed(2);
+      const ry = (x * 3).toFixed(2);
+      card.style.transform = `rotateX(${{rx}}deg) rotateY(${{ry}}deg)`;
+    }});
+
+    card.addEventListener("mouseleave", () => {{
+      card.style.transform = "";
+    }});
 
     type();
   </script>
